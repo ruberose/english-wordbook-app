@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+*.egg-info/
+
+# PyInstaller 빌드 결과물
+build/
+dist/
+*.spec
+
+# 가상환경
+venv/
+.env/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Excel 임시 파일
+~$*.xlsx
