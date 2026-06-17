@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import (
     QMainWindow, QTabWidget, QStatusBar, QLabel,
     QMenuBar, QFileDialog, QMessageBox
 )
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import Qt
 
 from data.repository import WordbookRepository
@@ -23,8 +23,18 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("영어 단어장")
         self.setMinimumSize(900, 620)
+        self._set_icon()
         self._build_ui()
         self._refresh_all()
+
+    def _set_icon(self):
+        import sys
+        if hasattr(sys, "_MEIPASS"):
+            icon_path = Path(sys._MEIPASS) / "assets" / "icon.ico"
+        else:
+            icon_path = Path(__file__).parent.parent / "assets" / "icon.ico"
+        if icon_path.exists():
+            self.setWindowIcon(QIcon(str(icon_path)))
 
     def _build_ui(self):
         # 메뉴바

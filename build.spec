@@ -25,6 +25,7 @@ exe = EXE(
     a.datas,
     [],
     name='영어단어장',
+    icon='assets/icon.ico',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
