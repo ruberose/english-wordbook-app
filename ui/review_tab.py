@@ -2,6 +2,7 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QMessageBox
 )
 from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QKeyEvent
 
 from data.models import WordEntry
 from logic.forgetting import get_due_entries, update_after_review
@@ -19,6 +20,7 @@ class ReviewTab(QWidget):
         self._correct = 0
         self._total = 0
         self._build_ui()
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
     def refresh(self, all_entries: list[WordEntry]):
         self._queue = get_due_entries(all_entries)
@@ -66,7 +68,7 @@ class ReviewTab(QWidget):
         self._example_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._example_label.setWordWrap(True)
 
-        self._hint_label = QLabel("탭하여 뜻 확인")
+        self._hint_label = QLabel("Space / Enter — 뜻 확인")
         self._hint_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._hint_label.setStyleSheet("color:#adb5bd; font-size:12px; font-style:italic;")
 
@@ -97,6 +99,12 @@ class ReviewTab(QWidget):
         btn_row.addWidget(self._wrong_btn)
         btn_row.addWidget(self._correct_btn)
         layout.addLayout(btn_row)
+
+        self._shortcut_label = QLabel("← / X  몰랐다     →  / O  알았다")
+        self._shortcut_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._shortcut_label.setStyleSheet("color:#ced4da; font-size:11px;")
+        self._shortcut_label.hide()
+        layout.addWidget(self._shortcut_label)
         layout.addStretch()
 
         self._show_btn.clicked.connect(self._reveal_answer)
@@ -119,6 +127,7 @@ class ReviewTab(QWidget):
         self._show_btn.show()
         self._wrong_btn.hide()
         self._correct_btn.hide()
+        self._shortcut_label.hide()
 
     def _reveal_answer(self):
         if self._current is None:
@@ -134,6 +143,8 @@ class ReviewTab(QWidget):
         self._show_btn.hide()
         self._wrong_btn.show()
         self._correct_btn.show()
+        self._shortcut_label.show()
+        self._showing_answer = True
 
     def _submit(self, correct: bool):
         if self._current is None:
@@ -154,7 +165,20 @@ class ReviewTab(QWidget):
         self._show_btn.hide()
         self._wrong_btn.hide()
         self._correct_btn.hide()
+        self._shortcut_label.hide()
         rate = int(self._correct / self._total * 100) if self._total else 0
         self._progress_label.setText(
             f"오늘 복습 완료  |  정답률 {rate}%  ({self._correct}/{self._total})"
         )
+
+    def keyPressEvent(self, event: QKeyEvent):
+        key = event.key()
+        if not self._showing_answer:
+            if key in (Qt.Key.Key_Space, Qt.Key.Key_Return, Qt.Key.Key_Enter):
+                self._reveal_answer()
+        else:
+            if key in (Qt.Key.Key_Right, Qt.Key.Key_O, Qt.Key.Key_K):
+                self._submit(True)
+            elif key in (Qt.Key.Key_Left, Qt.Key.Key_X, Qt.Key.Key_J):
+                self._submit(False)
+        super().keyPressEvent(event)

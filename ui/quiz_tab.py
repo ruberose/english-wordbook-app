@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import (
     QButtonGroup, QRadioButton, QComboBox, QSpinBox, QScrollArea
 )
 from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QKeyEvent
 
 from data.models import WordEntry
 from logic.quiz import build_questions, QuizQuestion
@@ -20,6 +21,7 @@ class QuizTab(QWidget):
         self._current_idx = 0
         self._score = 0
         self._build_ui()
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
     def refresh(self, all_entries: list[WordEntry]):
         self._all_entries = all_entries
@@ -116,12 +118,17 @@ class QuizTab(QWidget):
         self._feedback_label.setStyleSheet("font-weight:600; font-size:14px;")
         layout.addWidget(self._feedback_label)
 
-        self._next_btn = QPushButton("다음 →")
+        self._next_btn = QPushButton("다음 →  (Enter)")
         self._next_btn.setObjectName("primary")
         self._next_btn.setMinimumHeight(42)
         self._next_btn.hide()
         self._next_btn.clicked.connect(self._next_question)
         layout.addWidget(self._next_btn)
+
+        shortcut_hint = QLabel("키보드: 1 · 2 · 3 · 4 로 선택  /  Enter 로 다음")
+        shortcut_hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        shortcut_hint.setStyleSheet("color:#ced4da; font-size:11px; margin-top:4px;")
+        layout.addWidget(shortcut_hint)
 
         layout.addStretch()
         return w
@@ -232,3 +239,23 @@ class QuizTab(QWidget):
         self._setup_panel.setVisible(name == "setup")
         self._quiz_panel.setVisible(name == "quiz")
         self._result_panel.setVisible(name == "result")
+
+    def keyPressEvent(self, event: QKeyEvent):
+        if not self._quiz_panel.isVisible():
+            super().keyPressEvent(event)
+            return
+        key = event.key()
+        # 1~4: 보기 선택 (버튼이 활성화된 상태일 때만)
+        num_map = {
+            Qt.Key.Key_1: 0, Qt.Key.Key_2: 1,
+            Qt.Key.Key_3: 2, Qt.Key.Key_4: 3,
+        }
+        if key in num_map:
+            idx = num_map[key]
+            if self._choice_btns[idx].isEnabled():
+                self._on_choice(idx)
+        # Enter/Space: 다음 문제
+        elif key in (Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space):
+            if self._next_btn.isVisible():
+                self._next_question()
+        super().keyPressEvent(event)
